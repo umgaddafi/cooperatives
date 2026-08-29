@@ -37,7 +37,7 @@ export default function RootLayout({
                        l.includes('id: ca9') || 
                        l.includes('id: b815') ||
                        l.includes('notallowederror') ||
-                       l.includes('clipboard') ||
+                       l.includes('clipboard');
               } catch (e) {
                 return false;
               }
