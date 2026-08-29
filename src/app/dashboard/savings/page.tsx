@@ -16,20 +16,17 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
-import { doc, addDoc, collection } from 'firebase/firestore';
+import { useDatabase, useDoc, useMemoData, useUser, doc, addDoc, collection, errorEmitter, DatabasePermissionError } from '@/lib/mysql-client';
 import { SystemSettings } from '@/lib/types';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function MemberSavings() {
   const { toast } = useToast();
-  const db = useFirestore();
+  const db = useDatabase();
   const { user } = useUser();
   const [mandateSuccess, setMandateSuccess] = useState(false);
   const [isRequestingLoan, setIsRequestingLoan] = useState(false);
 
-  const settingsRef = useMemoFirebase(() => db ? doc(db, 'settings', 'global') : null, [db]);
+  const settingsRef = useMemoData(() => db ? doc(db, 'settings', 'global') : null, [db]);
   const { data: settings } = useDoc<SystemSettings>(settingsRef);
 
   const [loanRequest, setLoanRequest] = useState({
@@ -80,7 +77,7 @@ export default function MemberSavings() {
       })
       .catch(async (e) => {
         setIsRequestingLoan(false);
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
+        errorEmitter.emit('permission-error', new DatabasePermissionError({
           path: loanCollection.path,
           operation: 'create',
           requestResourceData: payload

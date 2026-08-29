@@ -1,5 +1,5 @@
-# Firebase Studio
+# CoopNest
 
-This is a NextJS starter in Firebase Studio.
+Next.js cooperative society management application backed by MySQL.
 
 To get started, take a look at src/app/page.tsx.

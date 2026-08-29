@@ -24,8 +24,7 @@ import {
   Stethoscope,
   Scale
 } from 'lucide-react';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useDatabase, useDoc, useMemoData, doc } from '@/lib/mysql-client';
 import { SystemSettings } from '@/lib/types';
 import { motion } from 'framer-motion';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
@@ -33,10 +32,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export default function Home() {
-  const db = useFirestore();
+  const db = useDatabase();
   const [isScrolled, setIsScrolled] = useState(false);
   
-  const settingsRef = useMemoFirebase(() => db ? doc(db, 'settings', 'global') : null, [db]);
+  const settingsRef = useMemoData(() => db ? doc(db, 'settings', 'global') : null, [db]);
   const { data: settings, loading } = useDoc<SystemSettings>(settingsRef);
 
   useEffect(() => {

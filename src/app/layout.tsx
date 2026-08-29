@@ -1,7 +1,6 @@
 
 import type {Metadata} from 'next';
 import './globals.css';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
@@ -39,9 +38,6 @@ export default function RootLayout({
                        l.includes('id: b815') ||
                        l.includes('notallowederror') ||
                        l.includes('clipboard') ||
-                       l.includes('firestore (11.9.0)') ||
-                       l.includes('firebase: firestore (11.9.0)') ||
-                       l.includes('@firebase/firestore');
               } catch (e) {
                 return false;
               }
@@ -79,10 +75,8 @@ export default function RootLayout({
         `}} />
       </head>
       <body className="font-body antialiased selection:bg-primary/30">
-        <FirebaseClientProvider>
-          {children}
-          <Toaster />
-        </FirebaseClientProvider>
+        {children}
+        <Toaster />
       </body>
     </html>
   );

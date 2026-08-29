@@ -2,8 +2,7 @@
 "use client"
 
 import { useState, useMemo } from 'react';
-import { collection, query, orderBy } from 'firebase/firestore';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, useDatabase, useCollection, useMemoData } from '@/lib/mysql-client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -28,14 +27,14 @@ import { Contribution, Loan } from '@/lib/types';
 export default function TreasuryManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('ALL');
-  const db = useFirestore();
+  const db = useDatabase();
 
-  const contributionsQuery = useMemoFirebase(() => {
+  const contributionsQuery = useMemoData(() => {
     if (!db) return null;
     return query(collection(db, 'contributions'), orderBy('date', 'desc'));
   }, [db]);
 
-  const loansQuery = useMemoFirebase(() => {
+  const loansQuery = useMemoData(() => {
     if (!db) return null;
     return query(collection(db, 'loans'), orderBy('createdAt', 'desc'));
   }, [db]);

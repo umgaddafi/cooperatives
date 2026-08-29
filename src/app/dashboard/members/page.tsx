@@ -2,8 +2,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, doc, updateDoc, setDoc, addDoc } from 'firebase/firestore';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, doc, updateDoc, setDoc, addDoc, useDatabase, useCollection, useMemoData, errorEmitter, DatabasePermissionError } from '@/lib/mysql-client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -12,8 +11,6 @@ import { Search, UserPlus, Filter, Loader2, Edit3, User as UserIcon } from 'luci
 import { Button } from '@/components/ui/button';
 import { User, UserRole } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -39,7 +36,7 @@ export default function MemberDirectory() {
     status: 'Active'
   });
 
-  const db = useFirestore();
+  const db = useDatabase();
   const { toast } = useToast();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
@@ -52,7 +49,7 @@ export default function MemberDirectory() {
     }
   }, []);
 
-  const membersQuery = useMemoFirebase(() => {
+  const membersQuery = useMemoData(() => {
     if (!db) return null;
     return query(collection(db, 'users'), orderBy('name', 'asc'));
   }, [db]);
@@ -81,7 +78,7 @@ export default function MemberDirectory() {
         logAudit('Manual Enrollment', newMember.name!);
       })
       .catch(async (e) => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
+        errorEmitter.emit('permission-error', new DatabasePermissionError({
           path: usersCol.path,
           operation: 'create',
           requestResourceData: payload
@@ -104,7 +101,7 @@ export default function MemberDirectory() {
         logAudit('Member Data Modified', selectedMember.name);
       })
       .catch(async (e) => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
+        errorEmitter.emit('permission-error', new DatabasePermissionError({
           path: userRef.path,
           operation: 'update',
           requestResourceData: updateData

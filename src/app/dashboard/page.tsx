@@ -17,14 +17,11 @@ import {
   Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { doc, query, collection, where, updateDoc } from 'firebase/firestore';
+import { useDatabase, useDoc, useCollection, useMemoData, useUser, doc, query, collection, where, updateDoc, errorEmitter, DatabasePermissionError } from '@/lib/mysql-client';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { sendGuarantorRequest } from '@/ai/flows/guarantor-notification-flow';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -42,17 +39,17 @@ const itemVariants = {
 export default function DashboardOverview() {
   const [role, setRole] = useState<UserRole | null>(null);
   const { user } = useUser();
-  const db = useFirestore();
+  const db = useDatabase();
   const { toast } = useToast();
   const [processingId, setProcessingId] = useState<string | null>(null);
   
-  const settingsRef = useMemoFirebase(() => db ? doc(db, 'settings', 'global') : null, [db]);
+  const settingsRef = useMemoData(() => db ? doc(db, 'settings', 'global') : null, [db]);
   const { data: settings } = useDoc<SystemSettings>(settingsRef);
 
-  const userProfileRef = useMemoFirebase(() => (db && user) ? doc(db, 'users', user.uid) : null, [db, user]);
+  const userProfileRef = useMemoData(() => (db && user) ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: userProfile } = useDoc<any>(userProfileRef);
 
-  const pendingNotifQuery = useMemoFirebase(() => {
+  const pendingNotifQuery = useMemoData(() => {
     if (!db) return null;
     return query(collection(db, 'loans'), where('status', '==', 'AWAITING_NOTIFICATION_APPROVAL'));
   }, [db]);
@@ -94,7 +91,7 @@ export default function DashboardOverview() {
             toast({ title: "Guarantors Notified", description: `Authorizations sent for ${loan.memberName}'s loan application.` });
           })
           .catch(async (e) => {
-            errorEmitter.emit('permission-error', new FirestorePermissionError({
+            errorEmitter.emit('permission-error', new DatabasePermissionError({
               path: loanRef.path,
               operation: 'update',
               requestResourceData: updateData

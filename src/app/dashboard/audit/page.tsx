@@ -1,7 +1,6 @@
 "use client"
 
-import { collection, query, orderBy, limit } from 'firebase/firestore';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, limit, useDatabase, useCollection, useMemoData } from '@/lib/mysql-client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
@@ -11,9 +10,9 @@ import { Button } from '@/components/ui/button';
 import { AuditLog } from '@/lib/types';
 
 export default function AuditCenter() {
-  const db = useFirestore();
+  const db = useDatabase();
 
-  const logsQuery = useMemoFirebase(() => {
+  const logsQuery = useMemoData(() => {
     if (!db) return null;
     return query(collection(db, 'auditLogs'), orderBy('timestamp', 'desc'), limit(50));
   }, [db]);
@@ -37,12 +36,12 @@ export default function AuditCenter() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div className="space-y-1">
               <CardTitle className="text-lg font-bold">System Integrity</CardTitle>
-              <CardDescription className="text-emerald-400/70">Firestore-verified records.</CardDescription>
+              <CardDescription className="text-emerald-400/70">Database-verified records.</CardDescription>
             </div>
             <ShieldCheck className="w-10 h-10 text-emerald-400" />
           </CardHeader>
           <CardContent>
-            <p className="text-sm">All financial records are secured and tracked via Firestore security rules.</p>
+            <p className="text-sm">All financial records are secured and tracked through the application database.</p>
           </CardContent>
         </Card>
         <Card className="bg-orange-500/5 border-orange-500/10">

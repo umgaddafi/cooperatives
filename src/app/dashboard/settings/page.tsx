@@ -2,10 +2,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { doc, setDoc, serverTimestamp, updateDoc, arrayUnion } from 'firebase/firestore';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { doc, setDoc, serverTimestamp, updateDoc, arrayUnion, useDatabase, useDoc, useMemoData, errorEmitter, DatabasePermissionError } from '@/lib/mysql-client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,7 +29,7 @@ import { uploadLogo } from '@/app/actions/upload';
 
 export default function CommandCenter() {
   const { toast } = useToast();
-  const db = useFirestore();
+  const db = useDatabase();
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -41,7 +38,7 @@ export default function CommandCenter() {
     setRole(localStorage.getItem('coopnest_role'));
   }, []);
 
-  const settingsRef = useMemoFirebase(() => db ? doc(db, 'settings', 'global') : null, [db]);
+  const settingsRef = useMemoData(() => db ? doc(db, 'settings', 'global') : null, [db]);
   const { data: settingsData, loading: settingsLoading } = useDoc<SystemSettings>(settingsRef);
 
   const [form, setForm] = useState<Partial<SystemSettings>>({
@@ -86,7 +83,7 @@ export default function CommandCenter() {
           }
         }));
         
-        // Save immediately to Firestore using the most current data to ensure global updates
+        // Save immediately using the most current data to ensure global updates
         const currentBranding = settingsData?.branding || { systemName: 'CoopNest' };
         await setDoc(settingsRef, {
           branding: { 
@@ -123,7 +120,7 @@ export default function CommandCenter() {
         logAudit('System Settings Updated', 'Global Config');
       })
       .catch(async (e) => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: settingsRef.path, operation: 'update', requestResourceData: payload }));
+        errorEmitter.emit('permission-error', new DatabasePermissionError({ path: settingsRef.path, operation: 'update', requestResourceData: payload }));
       })
       .finally(() => setLoading(false));
   };
