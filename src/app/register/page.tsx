@@ -8,9 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -19,8 +16,6 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const auth = useAuth();
-  const db = useFirestore();
   const { toast } = useToast();
   
   const [email, setEmail] = useState('');
@@ -28,8 +23,8 @@ export default function RegisterPage() {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const settingsRef = useMemoFirebase(() => db ? doc(db, 'settings', 'global') : null, [db]);
-  const { data: settings } = useDoc<SystemSettings>(settingsRef);
+  const [settings, setSettings] = useState<SystemSettings | null>(null);
+  useEffect(() => { fetch('/api/settings').then(r => r.ok ? r.json() : null).then(setSettings).catch(() => {}); }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,18 +35,9 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth!, email, password);
-      const user = userCredential.user;
-
-      await setDoc(doc(db!, 'users', user.uid), {
-        name,
-        email,
-        role: 'MEMBER',
-        memberId: `MB-${Math.floor(1000 + Math.random() * 9000)}`,
-        status: 'Pending',
-        joinDate: new Date().toISOString().split('T')[0],
-        totalSavings: 0
-      });
+      const response = await fetch('/api/auth/register', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name, email, password }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Registration failed');
 
       toast({ 
         title: "Registration Successful", 

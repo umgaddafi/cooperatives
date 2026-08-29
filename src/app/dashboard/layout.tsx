@@ -7,9 +7,6 @@ import { UserRole, SystemSettings } from '@/lib/types';
 import { DashboardSidebar } from '@/components/dashboard/Sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Bell, Mail, Menu, LogOut, ChevronRight, LayoutDashboard, Wallet, Users, CreditCard, Search, ShieldAlert, Settings, ShieldCheck } from 'lucide-react';
-import { useFirestore, useDoc, useMemoFirebase, useAuth, useUser } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { signOut } from 'firebase/auth';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -18,16 +15,14 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const auth = useAuth();
-  const { user, loading: authLoading } = useUser();
-  const db = useFirestore();
+  const [user, setUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [role, setRole] = useState<UserRole | null>(null);
 
-  const settingsRef = useMemoFirebase(() => db ? doc(db, 'settings', 'global') : null, [db]);
-  const { data: settings } = useDoc<SystemSettings>(settingsRef);
-
-  const userProfileRef = useMemoFirebase(() => (db && user) ? doc(db, 'users', user.uid) : null, [db, user]);
-  const { data: userProfile, loading: profileLoading } = useDoc<any>(userProfileRef);
+  const [settings, setSettings] = useState<SystemSettings | null>(null);
+  const userProfile = user;
+  const profileLoading = authLoading;
+  useEffect(() => { Promise.all([fetch('/api/auth/me'), fetch('/api/settings')]).then(async ([u, s]) => { const ud = await u.json(); setUser(ud.user); if (s.ok) setSettings(await s.json()); }).finally(() => setAuthLoading(false)); }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -45,7 +40,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [userProfile, profileLoading, user]);
 
   const handleLogout = async () => {
-    await signOut(auth!);
+    await fetch('/api/auth/logout', { method: 'POST' });
     localStorage.removeItem('coopnest_role');
     router.push('/login');
   };
@@ -170,7 +165,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </button>
             <div className="flex items-center gap-3 ml-2 group cursor-pointer" onClick={handleLogout}>
               <Avatar className="h-12 w-12 border-2 border-emerald-500 p-0.5 shadow-md">
-                <AvatarImage src={`https://picsum.photos/seed/${user?.uid}/200/200`} alt="Profile" className="rounded-full" />
+                <AvatarImage src={`https://picsum.photos/seed/${user?.id}/200/200`} alt="Profile" className="rounded-full" />
                 <AvatarFallback className="bg-emerald-100 text-emerald-700 font-black">
                   {user?.email?.substring(0, 2).toUpperCase()}
                 </AvatarFallback>
