@@ -38,7 +38,13 @@ yarn-error.log*
 next-env.d.ts
 
 .genkit/*
+
+# environment
 .env*
+!.env.example
+
+# local deployment artifacts
+cpanel-next-build.zip
 
 # firebase
 firebase-debug.log
